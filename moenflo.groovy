@@ -11,7 +11,7 @@ metadata {
         
         command "home"
         command "away"
-        command "sleep_mode"
+        command "sleepMode"
 
         attribute "numberOfButtons", "number"
         attribute "pushed", "number"
@@ -59,14 +59,17 @@ def close() {
 }
 
 def home() {
+    login()
     set_mode("home")
 }
 
 def away() {
+    login()
     set_mode("away")
 }
 
-def sleep_mode() {
+def sleepMode() {
+    login()
     set_mode("sleep")
 }
 
@@ -85,16 +88,16 @@ def set_mode(mode) {
 
     try {
         httpPostJson([headers: headers, uri: uri, body: body]) { response -> def msg = ""
-		if (response?.status == 204) {
-			msg = "Success"
+        if (response?.status == 204) {
+            msg = "Success"
             sendEvent(name: "mode", value: mode, isStateChange: true)
             log.debug "Mode Update Successful: ${mode}"
 
 
-		}
-		else {
+        }
+        else {
             log.debug "Mode Update Failed (${response.status}): ${response.data}"
-		}
+        }
       }
     }
     catch (Exception e) {
@@ -114,17 +117,17 @@ def valve_update(target) {
 
     try {
         httpPostJson([headers: headers, uri: uri, body: body]) { response -> def msg = ""
-		if (response?.status == 200) {
-			msg = "Success"
-			device.updateDataValue("token",response.data.token)
+        if (response?.status == 200) {
+            msg = "Success"
+            device.updateDataValue("token",response.data.token)
             sendEvent(name: "valve", value: target, isStateChange: true)
             log.debug "Valve Update Successful: ${target}"
 
 
-		}
-		else {
-			log.debug "Valve Update Failed: ${response.data}"
-		}
+        }
+        else {
+            log.debug "Valve Update Failed: ${response.data}"
+        }
       }
     }
     catch (Exception e) {
@@ -135,15 +138,15 @@ def valve_update(target) {
 
 def push(btn) {
     log.debug "button pushed ${btn}"
-    def mode = "home"
     switch(btn) { 
-       case 1: mode = "home"
-       case 2: mode = "away"
-       case 3: mode = "sleep"
-       default: mode = "home"
+       case 1: mode = "home"; break;
+       case 2: mode = "away"; break;
+       case 3: mode = "sleep"; break;
+       default: mode = "home";
     } 
-    
-    update_mode(mode)
+    log.debug "mode case ${mode}"
+
+    set_mode(mode)
     
 }
 
@@ -157,8 +160,8 @@ def get_device() {
     
     try {
         httpGet([headers: headers, uri: uri]) { response -> def msg = ""
-		if (response?.status == 200) {
-			msg = "Success"
+        if (response?.status == 200) {
+            msg = "Success"
             device.updateDataValue("location_id", response.data.locations[0].id)
             response.data.locations[0].devices.each {
                 if(it.macAddress == mac_address) {
@@ -168,10 +171,10 @@ def get_device() {
                 }
             }
 
-		}
-		else {
-			log.debug "Get Device Failed: ${response.data}"
-		}
+        }
+        else {
+            log.debug "Get Device Failed: ${response.data}"
+        }
       }
     }
     catch (Exception e) {
@@ -193,14 +196,14 @@ def login() {
 
     try {
         httpPostJson([headers: headers, uri: uri, body: body]) { response -> def msg = ""
-		if (response?.status == 200) {
-			msg = "Success"
-			device.updateDataValue("token",response.data.token)
+        if (response?.status == 200) {
+            msg = "Success"
+            device.updateDataValue("token",response.data.token)
             device.updateDataValue("user_id", response.data.tokenPayload.user.user_id)
-		}
-		else {
-			log.debug "Login Failed: ${response.data}"
-		}
+        }
+        else {
+            log.debug "Login Failed: ${response.data}"
+        }
       }
     }
     catch (Exception e) {
