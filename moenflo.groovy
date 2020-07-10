@@ -3,7 +3,7 @@
  */
 
 metadata {
-    definition (name: "Moen Flo", namespace: "dacmanj", author: "David Manuel", importUrl: "https://github.com/...") {
+    definition (name: "Moen Flo", namespace: "dacmanj", author: "David Manuel", importUrl: "https://raw.githubusercontent.com/dacmanj/hubitat-moenflo/master/moenflo.groovy") {
         capability "Valve"
         capability "PushableButton"
         capability "LocationMode"
