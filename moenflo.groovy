@@ -29,6 +29,9 @@ metadata {
         attribute "rssi", "number"
         attribute "ssid", "text"
         attribute "lastHubitatHealthtestStatus", "text"
+        attribute "alertInfoCount", "number"
+        attribute "alertWarningCount", "number"
+        attribute "alertCriticalCount", "number"
 
     }
 
@@ -36,7 +39,6 @@ metadata {
         input(name: "username", type: "string", title:"User Name", description: "Enter Moen Flo User Name", required: true, displayDuringSetup: true)
         input(name: "password", type: "string", title:"Password", description: "Enter Moen Flo Password", required: true, displayDuringSetup: true)
         input(name: "mac_address", type: "string", title:"Device Id", description: "Enter Device ID from MeetFlo.com", required: true, displayDuringSetup: true)
-        input(name: "mode_input", type: "enum", title: "Mode", options: ["home","away","sleep"], defaultValue: "home")
         input(name: "revert_mode", type: "enum", title: "Revert Mode (after Sleep)", options: ["home","away","sleep"], defaultValue: "home")
         input(name: "revert_minutes", type: "number", title: "Revert Time in Minutes (after Sleep)", defaultValue: 120)
     }
@@ -60,20 +62,13 @@ def logout() {
 
 def updated() {
     configure()
-    log.debug(mode_input)
-    log.debug(device.currentValue('mode'))
-    if (state.mode != mode_input) {
-        login()
-        setMode(mode_input)
-    }
 }
 
 def unschedulePolling() {
-    unschedule(getDeviceInfo)
+    unschedule(pollMoen)
 }
 
 def schedulePolling() {
-    unschedule(getDeviceInfo)
     unschedule(pollMoen)
     schedule('0 0/10 * 1/1 * ? *', pollMoen)
 }
@@ -173,6 +168,12 @@ def getDeviceInfo() {
     sendEvent(name: "valve", value: data?.valve?.target, isStateChange: true)
     sendEvent(name: "rssi", value: data?.connectivity?.rssi, isStateChange: true)
     sendEvent(name: "ssid", value: data?.connectivity?.ssid, isStateChange: true)
+    def system_mode = data?.fwProperties?.system_mode
+    def SYSTEM_MODES = [2: "home", 3: "away", 5: "sleep"]
+    sendEvent(name: "mode", value: SYSTEM_MODES[system_mode], isStateChange: true)
+    sendEvent(name: "alertInfoCount", value: data?.notifications?.pending?.infoCount, isStateChange: true)
+    sendEvent(name: "alertwarningCount", value: data?.notifications?.pending?.warningCount, isStateChange: true)
+    sendEvent(name: "alertcriticalCount", value: data?.notifications?.pending?.criticalCount, isStateChange: true)
     
 }
 
