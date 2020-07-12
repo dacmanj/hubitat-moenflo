@@ -1,5 +1,11 @@
 /**
- * Moen Flo
+ * Moen Flo for Hubitat by David Manuel is licensed under CC BY 4.0 see https://creativecommons.org/licenses/by/4.0
+ * Software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF 
+ * ANY KIND, either express or implied. See the License for the specific language governing permissions and 
+ * limitations under the License.
+ *
+ * Version 0.1
+ * 
  */
 
 metadata {
@@ -17,7 +23,6 @@ metadata {
         command "logout"
         command "manualHealthTest"
         command "pollMoen"
-        command "expireToken"
 
         attribute "numberOfButtons", "number"
         attribute "pushed", "number"
@@ -46,11 +51,6 @@ metadata {
         input(name: "revert_minutes", type: "number", title: "Revert Time in Minutes (after Sleep)", defaultValue: 120)
     }
     
-}
-
-
-def expireToken() {
-    device.updateDataValue("token", "")
 }
 
 def parse(String description) {
