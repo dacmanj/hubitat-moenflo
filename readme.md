@@ -23,3 +23,4 @@ Moen Flo for Hubitat by David Manuel is licensed under [CC BY 4.0](https://c
 ## Usage
 - The valve capability works just like any other valve and can be opened or closed by HSM (e.g. when water is detected)
 - The mode (home, away and sleep) can be set using the device buttons or by "pushing" one of the three buttons in an automation rule. Button 1 is for "Home" mode, Button 2 is for "Away" mode, and Button 3 is for "Sleep" mode.
+- The API requires a timeout value for "Sleep" mode to return to another mode. The default is to return to Home mode after 120 minutes, but can be changed in the preferences.

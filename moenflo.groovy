@@ -17,6 +17,7 @@ metadata {
         command "logout"
         command "manualHealthTest"
         command "pollMoen"
+        command "expireToken"
 
         attribute "numberOfButtons", "number"
         attribute "pushed", "number"
@@ -45,6 +46,11 @@ metadata {
         input(name: "revert_minutes", type: "number", title: "Revert Time in Minutes (after Sleep)", defaultValue: 120)
     }
     
+}
+
+
+def expireToken() {
+    device.updateDataValue("token", "")
 }
 
 def parse(String description) {
@@ -124,8 +130,7 @@ def valve_update(target) {
 
     def body = [valve:[target: target]]
     def response = make_authenticated_post(uri, body, "Valve Update")
-    device.updateDataValue("token",response.data.token)
-    sendEvent(name: "valve", value: target)
+    sendEvent(name: "valve", value: response?.data?.valve?.target)
 }
 
 def push(btn) {
@@ -199,13 +204,13 @@ def getHealthTestInfo() {
 
 def make_authenticated_get(uri, request_type, success_status = [200, 202]) {
     if (!device.getDataValue("token")) login();
-    def headers = [:] 
-    headers.put("Content-Type", "application/json")
-    headers.put("Authorization", device.getDataValue("token"))
     def response = [:];
     int max_tries = 2;
     int tries = 0;
     while (!response?.status && tries < max_tries) {
+        def headers = [:] 
+        headers.put("Content-Type", "application/json")
+        headers.put("Authorization", device.getDataValue("token"))
     
         try {
             httpGet([headers: headers, uri: uri]) { resp -> def msg = ""
@@ -215,11 +220,13 @@ def make_authenticated_get(uri, request_type, success_status = [200, 202]) {
             }
             else {
                 log.debug "${request_type} Failed (${response.status}): ${response.data}"
+                login()
             }
           }
         }
         catch (Exception e) {
             log.debug "${request_type} Exception: ${e}"
+            log.debug "Refreshing token..."
             login()
         }
         tries++
@@ -243,13 +250,13 @@ def manualHealthTest() {
 
 def make_authenticated_post(uri, body, request_type, success_status = [200, 202]) {
     if (!device.getDataValue("token")) login();
-    def headers = [:] 
-    headers.put("Content-Type", "application/json")
-    headers.put("Authorization", device.getDataValue("token"))
     def response = [:];
     int max_tries = 2;
     int tries = 0;
     while (!response?.status && tries < max_tries) {
+        def headers = [:] 
+        headers.put("Content-Type", "application/json")
+        headers.put("Authorization", device.getDataValue("token"))
     
         try {
             httpPostJson([headers: headers, uri: uri, body: body]) { resp -> def msg = ""
@@ -264,6 +271,7 @@ def make_authenticated_post(uri, body, request_type, success_status = [200, 202]
         }
         catch (Exception e) {
             log.debug "${request_type} Exception: ${e}"
+            log.debug "Refreshing token..."
             login()
 
         }
