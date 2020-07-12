@@ -179,7 +179,6 @@ def getDeviceInfo() {
 }
 
 def getConsumption() {
-    //https://api-gw.meetflo.com/api/v2/water/consumption?startDate=2020-07-09T00:00:00.000&endDate=2020-07-09T23:59:59.999&locationId=52878589-4f30-4331-8620-efb8d59b22a3&interval=1h
     def location_id = device.getDataValue("location_id")
     def startDate = new Date().format('yyyy-MM-dd') + 'T00:00:00.000'
     def endDate = new Date().format('yyyy-MM-dd') + 'T23:59:59.999'
