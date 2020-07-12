@@ -1,5 +1,6 @@
 /**
- * Moen Flo
+ * Moen Flo for Hubitat by David Manuel is licensed under CC BY 4.0. 
+ * To view a copy of this license, visit https://creativecommons.org/licenses/by/4.0
  */
 
 metadata {
