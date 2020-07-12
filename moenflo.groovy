@@ -1,6 +1,5 @@
 /**
- * Moen Flo for Hubitat by David Manuel is licensed under CC BY 4.0. 
- * To view a copy of this license, visit https://creativecommons.org/licenses/by/4.0
+ * Moen Flo
  */
 
 metadata {
@@ -39,9 +38,10 @@ metadata {
 
     preferences {
         input(name: "username", type: "string", title:"User Name", description: "Enter Moen Flo User Name", required: true, displayDuringSetup: true)
-        input(name: "password", type: "string", title:"Password", description: "Enter Moen Flo Password", required: true, displayDuringSetup: true)
+        input(name: "password", type: "password", title:"Password", description: "Enter Moen Flo Password (to set or change it)", displayDuringSetup: true)
         input(name: "mac_address", type: "string", title:"Device Id", description: "Enter Device ID from MeetFlo.com", required: true, displayDuringSetup: true)
         input(name: "revert_mode", type: "enum", title: "Revert Mode (after Sleep)", options: ["home","away","sleep"], defaultValue: "home")
+        input(name: "polling_interval", type: "enum", title: "Polling Interval (in Minutes)", options: ["None","5","10", "15", "30", "60"], defaultValue: "10")
         input(name: "revert_minutes", type: "number", title: "Revert Time in Minutes (after Sleep)", defaultValue: 120)
     }
     
@@ -52,7 +52,6 @@ def parse(String description) {
 }
 
 def open() {
-    login()
     valve_update("open")
 }
 
@@ -64,6 +63,7 @@ def logout() {
 
 def updated() {
     configure()
+    pollMoen()
 }
 
 def unschedulePolling() {
@@ -72,7 +72,9 @@ def unschedulePolling() {
 
 def schedulePolling() {
     unschedule(pollMoen)
-    schedule('0 0/10 * 1/1 * ? *', pollMoen)
+    if (polling_interval != "None") {
+        schedule("0 0/${polling_interval} * 1/1 * ? *", pollMoen)
+    }
 }
 
 def pollMoen() {
@@ -82,22 +84,18 @@ def pollMoen() {
 }
 
 def close() {
-    login()
     valve_update("closed")
 }
 
 def home() {
-    login()
     setMode("home")
 }
 
 def away() {
-    login()
     setMode("away")
 }
 
 def sleepMode() {
-    login()
     setMode("sleep")
 }
 
@@ -277,13 +275,18 @@ def make_authenticated_post(uri, body, request_type, success_status = [200, 202]
 
 
 def configure() {
+    if (password && password != "") {
+        device.updateDataValue("encryptedPassword", encrypt(password))
+        device.removeSetting("password")
+        login()
+    }
     sendEvent(name:"numberOfButtons", value: 3)
     schedulePolling()
 }
 
 def login() {
     def uri = "https://api.meetflo.com/api/v1/users/auth"
-    def body = [username:username, password:password]
+    def body = [username:username, password:decrypt(device.getDataValue("encryptedPassword"))]
     def headers = [:] 
     headers.put("Content-Type", "application/json")
 
