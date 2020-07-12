@@ -32,6 +32,7 @@ metadata {
         attribute "alertInfoCount", "number"
         attribute "alertWarningCount", "number"
         attribute "alertCriticalCount", "number"
+        attribute "totalGallonsToday", "number"
 
     }
 
@@ -76,6 +77,7 @@ def schedulePolling() {
 def pollMoen() {
     getDeviceInfo()
     getHealthTestInfo()
+    getConsumption()
 }
 
 def close() {
@@ -113,7 +115,7 @@ def setMode(mode) {
     }
 
     def response = make_authenticated_post(uri, body, "Mode Update", [204])
-    sendEvent(name: "mode", value: mode, isStateChange: true)
+    sendEvent(name: "mode", value: mode)
     
 }
 
@@ -124,18 +126,17 @@ def valve_update(target) {
     def body = [valve:[target: target]]
     def response = make_authenticated_post(uri, body, "Valve Update")
     device.updateDataValue("token",response.data.token)
-    sendEvent(name: "valve", value: target, isStateChange: true)
+    sendEvent(name: "valve", value: target)
 }
 
 def push(btn) {
-    log.debug "button pushed ${btn}"
     switch(btn) { 
        case 1: mode = "home"; break;
        case 2: mode = "away"; break;
        case 3: mode = "sleep"; break;
        default: mode = "home";
     } 
-    log.debug "mode case ${mode}"
+    log.debug "Setting Flo mode to ${mode}"
 
     setMode(mode)
     
@@ -161,20 +162,31 @@ def getDeviceInfo() {
     def uri = "https://api-gw.meetflo.com/api/v2/devices/${device_id}"
     def response = make_authenticated_get(uri, "Get Device")
     def data = response.data
-    sendEvent(name: "gpm", value: data?.telemetry?.current?.gpm, isStateChange: true)
-    sendEvent(name: "psi", value: data?.telemetry?.current?.psi, isStateChange: true)
-    sendEvent(name: "temperature", value: data?.telemetry?.current?.tempF, isStateChange: true)
-    sendEvent(name: "updated", value: data?.telemetry?.current?.updated, isStateChange: true)
-    sendEvent(name: "valve", value: data?.valve?.target, isStateChange: true)
-    sendEvent(name: "rssi", value: data?.connectivity?.rssi, isStateChange: true)
-    sendEvent(name: "ssid", value: data?.connectivity?.ssid, isStateChange: true)
+    sendEvent(name: "gpm", value: data?.telemetry?.current?.gpm)
+    sendEvent(name: "psi", value: data?.telemetry?.current?.psi)
+    sendEvent(name: "temperature", value: data?.telemetry?.current?.tempF)
+    sendEvent(name: "updated", value: data?.telemetry?.current?.updated)
+    sendEvent(name: "valve", value: data?.valve?.target)
+    sendEvent(name: "rssi", value: data?.connectivity?.rssi)
+    sendEvent(name: "ssid", value: data?.connectivity?.ssid)
     def system_mode = data?.fwProperties?.system_mode
     def SYSTEM_MODES = [2: "home", 3: "away", 5: "sleep"]
-    sendEvent(name: "mode", value: SYSTEM_MODES[system_mode], isStateChange: true)
-    sendEvent(name: "alertInfoCount", value: data?.notifications?.pending?.infoCount, isStateChange: true)
-    sendEvent(name: "alertwarningCount", value: data?.notifications?.pending?.warningCount, isStateChange: true)
-    sendEvent(name: "alertcriticalCount", value: data?.notifications?.pending?.criticalCount, isStateChange: true)
+    sendEvent(name: "mode", value: SYSTEM_MODES[system_mode])
+    sendEvent(name: "alertInfoCount", value: data?.notifications?.pending?.infoCount)
+    sendEvent(name: "alertwarningCount", value: data?.notifications?.pending?.warningCount)
+    sendEvent(name: "alertcriticalCount", value: data?.notifications?.pending?.criticalCount)
     
+}
+
+def getConsumption() {
+    //https://api-gw.meetflo.com/api/v2/water/consumption?startDate=2020-07-09T00:00:00.000&endDate=2020-07-09T23:59:59.999&locationId=52878589-4f30-4331-8620-efb8d59b22a3&interval=1h
+    def location_id = device.getDataValue("location_id")
+    def startDate = new Date().format('yyyy-MM-dd') + 'T00:00:00.000'
+    def endDate = new Date().format('yyyy-MM-dd') + 'T23:59:59.999'
+    def uri = "https://api-gw.meetflo.com/api/v2/water/consumption?startDate=${startDate}&endDate=${endDate}&locationId=${location_id}&interval=1h"
+    def response = make_authenticated_get(uri, "Get Consumption")
+    def data = response.data
+    sendEvent(name: "totalGallonsToday", value: data?.aggregations?.sumTotalGallonsConsumed)
 }
 
 def getHealthTestInfo() {
@@ -183,7 +195,7 @@ def getHealthTestInfo() {
     def uri = "https://api-gw.meetflo.com/api/v2/devices/${deviceId}/healthTest/${lastHealthTestId}"
     if(lastHealthTestId) {
         def response = make_authenticated_get(uri, "Get HealthTest Info")
-        sendEvent(name: "lastHubitatHealthtestStatus", value: response?.data?.status, isStateChange: true)
+        sendEvent(name: "lastHubitatHealthtestStatus", value: response?.data?.status)
     }
 }
 
@@ -227,7 +239,7 @@ def manualHealthTest() {
     def status = response?.data?.status
     device.updateDataValue("lastHubitatHealthtest", created)
     device.updateDataValue("lastHubitatHealthtestId", roundId)
-    sendEvent(name: "lastHubitatHealthtestStatus", value: status, isStateChange: true)
+    sendEvent(name: "lastHubitatHealthtestStatus", value: status)
 
 }
 
