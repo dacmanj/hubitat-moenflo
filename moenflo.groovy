@@ -93,8 +93,6 @@ def pollMoen() {
     getDeviceInfo()
     getHealthTestInfo()
     getConsumption()
-    device.updateSetting("device",[type:"enum", value:["test","tezt2"]])
-
 }
 
 def close() {
@@ -294,6 +292,9 @@ def configure() {
     if (password && password != "") {
         device.updateDataValue("encryptedPassword", encrypt(password))
         device.removeSetting("password")
+        if (!mac_address || mac_address == "" || !device.getDataValue("device_id") || !device.getDataValue("device_id") == "") {
+            state.configured = false
+        }
         login()
     }
     sendEvent(name:"numberOfButtons", value: 3)
