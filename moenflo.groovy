@@ -4,6 +4,7 @@
  * ANY KIND, either express or implied. See the License for the specific language governing permissions and 
  * limitations under the License.
  *
+ * 2020-07-12 v0.1b-alpha - Default to First Device
  * 2020-07-12 v0.1a-alpha - Add Debug Logging
  * 2020-07-12 v0.1-alpha - Initial Release
  * 
@@ -46,7 +47,7 @@ metadata {
     preferences {
         input(name: "username", type: "string", title:"User Name", description: "Enter Moen Flo User Name", required: true, displayDuringSetup: true)
         input(name: "password", type: "password", title:"Password", description: "Enter Moen Flo Password (to set or change it)", displayDuringSetup: true)
-        input(name: "mac_address", type: "string", title:"Device Id", description: "Enter Device ID from MeetFlo.com", required: true, displayDuringSetup: true)
+        input(name: "mac_address", type: "string", title:"Device Id", description: "Enter Device Id from MeetFlo.com (if you have multiple devices)", required: false, displayDuringSetup: true)
         input(name: "revert_mode", type: "enum", title: "Revert Mode (after Sleep)", options: ["home","away","sleep"], defaultValue: "home")
         input(name: "polling_interval", type: "enum", title: "Polling Interval (in Minutes)", options: ["None","5","10", "15", "30", "60"], defaultValue: "10")
         input(name: "revert_minutes", type: "number", title: "Revert Time in Minutes (after Sleep)", defaultValue: 120)    
@@ -58,7 +59,6 @@ metadata {
 
 def logsOff(){
     log.warn "Debug Logging Disabled..."
-    device.updateSetting("logEnable",[value:"false",type:"bool"])
 }
 
 def open() {
@@ -93,6 +93,8 @@ def pollMoen() {
     getDeviceInfo()
     getHealthTestInfo()
     getConsumption()
+    device.updateSetting("device",[type:"enum", value:["test","tezt2"]])
+
 }
 
 def close() {
@@ -152,13 +154,15 @@ def push(btn) {
 
 def getUserInfo() {
     def user_id = device.getDataValue("user_id")
-    log.debug "Getting device id for: ${mac_address}"
+    if (mac_address) { log.debug "Getting device id for: ${mac_address}"}
+    else { log.debug "Defaulting to first device found." }
     def uri = "https://api-gw.meetflo.com/api/v2/users/${user_id}?expand=locations,alarmSettings"
     def response = make_authenticated_get(uri, "Get User Info")
     device.updateDataValue("location_id", response.data.locations[0].id)
     response.data.locations[0].devices.each {
-        if(it.macAddress == mac_address) {
+        if(it.macAddress == mac_address || !mac_address || mac_address == "") {
             device.updateDataValue("device_id", it.id)
+            device.updateSetting("mac_address", it.macAddress)
             if(logEnable) log.debug "Found device id: ${it.id}"
             state.configured = true
         }
