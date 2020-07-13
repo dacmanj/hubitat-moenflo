@@ -57,7 +57,7 @@ metadata {
 }
 
 def logsOff(){
-    log.warn "debug logging disabled..."
+    log.warn "Debug Logging Disabled..."
     device.updateSetting("logEnable",[value:"false",type:"bool"])
 }
 
@@ -112,7 +112,7 @@ def sleepMode() {
 }
 
 def setMode(mode) {
-    
+    if (logEnable) log.debug "Setting Flo mode to ${mode}"
     def device_id = device.getDataValue("device_id")
     def location_id = device.getDataValue("location_id")
     def uri = "https://api-gw.meetflo.com/api/v2/locations/${location_id}/systemMode"
@@ -133,7 +133,7 @@ def setMode(mode) {
 def valve_update(target) {
     def device_id = device.getDataValue("device_id")
     def uri = "https://api-gw.meetflo.com/api/v2/devices/${device_id}"
-
+    if (logEnable) log.debug "Updating valve status to ${target}"
     def body = [valve:[target: target]]
     def response = make_authenticated_post(uri, body, "Valve Update")
     sendEvent(name: "valve", value: response?.data?.valve?.target)
@@ -146,10 +146,8 @@ def push(btn) {
        case 3: mode = "sleep"; break;
        default: mode = "home";
     } 
-    log.debug "Setting Flo mode to ${mode}"
-
+    if (logEnable) log.debug "Setting Flo mode to ${mode} via button press"
     setMode(mode)
-    
 }
 
 def getUserInfo() {
@@ -161,7 +159,7 @@ def getUserInfo() {
     response.data.locations[0].devices.each {
         if(it.macAddress == mac_address) {
             device.updateDataValue("device_id", it.id)
-            log.debug "Found device id: ${it.id}"
+            if(logEnable) log.debug "Found device id: ${it.id}"
             state.configured = true
         }
     }
