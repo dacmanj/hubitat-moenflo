@@ -4,6 +4,7 @@
  * ANY KIND, either express or implied. See the License for the specific language governing permissions and 
  * limitations under the License.
  *
+ * 2020-07-13 v0.1d-alpha - Added last event and last health test to polling
  * 2020-07-13 v0.1c-alpha - Update to login error logging/handling
  * 2020-07-12 v0.1b-alpha - Default to First Device
  * 2020-07-12 v0.1a-alpha - Add Debug Logging
@@ -42,7 +43,13 @@ metadata {
         attribute "alertWarningCount", "number"
         attribute "alertCriticalCount", "number"
         attribute "totalGallonsToday", "number"
-
+        attribute "lastEvent", "text"
+        attribute "lastEventDetail", "text"
+        attribute "lastEventDateTime", "text"
+        attribute "lastHealthTestStatus", "text"
+        attribute "lastHealthTestDetail", "text"
+        attribute "lastHealthTestDateTime", "text"
+        
     }
 
     preferences {
@@ -105,6 +112,7 @@ def pollMoen() {
     getDeviceInfo()
     getHealthTestInfo()
     getConsumption()
+    getLastAlerts()
 }
 
 def close() {
@@ -190,24 +198,52 @@ def getUserInfo() {
 
 def getDeviceInfo() {
     def device_id = device.getDataValue("device_id")
-    def uri = "https://api-gw.meetflo.com/api/v2/devices/${device_id}"
-    def response = make_authenticated_get(uri, "Get Device")
-    def data = response.data
-    sendEvent(name: "gpm", value: data?.telemetry?.current?.gpm)
-    sendEvent(name: "psi", value: data?.telemetry?.current?.psi)
-    sendEvent(name: "temperature", value: data?.telemetry?.current?.tempF)
-    sendEvent(name: "updated", value: data?.telemetry?.current?.updated)
-    sendEvent(name: "valve", value: data?.valve?.target)
-    sendEvent(name: "rssi", value: data?.connectivity?.rssi)
-    sendEvent(name: "ssid", value: data?.connectivity?.ssid)
-    def system_mode = data?.fwProperties?.system_mode
-    def SYSTEM_MODES = [2: "home", 3: "away", 5: "sleep"]
-    sendEvent(name: "mode", value: SYSTEM_MODES[system_mode])
-    sendEvent(name: "alertInfoCount", value: data?.notifications?.pending?.infoCount)
-    sendEvent(name: "alertwarningCount", value: data?.notifications?.pending?.warningCount)
-    sendEvent(name: "alertcriticalCount", value: data?.notifications?.pending?.criticalCount)
-    
+    if (!device_id || device_id == "") {
+        log.debug "Cannot complete device info request: No Device Id"
+    } else {
+        def uri = "https://api-gw.meetflo.com/api/v2/devices/${device_id}"
+        def response = make_authenticated_get(uri, "Get Device")
+        def data = response.data
+        sendEvent(name: "gpm", value: data?.telemetry?.current?.gpm)
+        sendEvent(name: "psi", value: data?.telemetry?.current?.psi)
+        sendEvent(name: "temperature", value: data?.telemetry?.current?.tempF)
+        sendEvent(name: "updated", value: data?.telemetry?.current?.updated)
+        sendEvent(name: "valve", value: data?.valve?.target)
+        sendEvent(name: "rssi", value: data?.connectivity?.rssi)
+        sendEvent(name: "ssid", value: data?.connectivity?.ssid)
+        def system_mode = data?.fwProperties?.system_mode
+        def SYSTEM_MODES = [2: "home", 3: "away", 5: "sleep"]
+        sendEvent(name: "mode", value: SYSTEM_MODES[system_mode])
+        sendEvent(name: "alertInfoCount", value: data?.notifications?.pending?.infoCount)
+        sendEvent(name: "alertwarningCount", value: data?.notifications?.pending?.warningCount)
+        sendEvent(name: "alertcriticalCount", value: data?.notifications?.pending?.criticalCount)
+    }
 }
+
+def getLastAlerts() {
+    def device_id = device.getDataValue("device_id")
+    if (!device_id || device_id == "") {
+        log.debug "Cannot fetch alerts: No Device Id"
+    } else {
+        def uri = "https://api-gw.meetflo.com/api/v2/alerts?isInternalAlarm=false&deviceId=${device_id}"
+        def response = make_authenticated_get(uri, "Get Alerts")
+        def data = response.data.items
+        if (data) {
+            sendEvent(name: "lastEvent", value: data[0]?.displayTitle)
+            sendEvent(name: "lastEventDetail", value: data[0].displayMessage)
+            sendEvent(name: "lastEventDateTime", value: data[0].createAt)
+            for (alert in data) {
+                if (alert?.healthTest?.roundId) {
+                    sendEvent(name: "lastHealthTestStatus", value: alert.displayTitle)
+                    sendEvent(name: "lastHealthTestDetail", value: alert.displayMessage)
+                    sendEvent(name: "lastHealthTestDateTime", value: alert.createAt)
+                    break;
+                }
+            }
+        }
+    }
+}
+
 
 def getConsumption() {
     def location_id = device.getDataValue("location_id")
