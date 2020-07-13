@@ -4,6 +4,7 @@
  * ANY KIND, either express or implied. See the License for the specific language governing permissions and 
  * limitations under the License.
  *
+ * 2020-07-12 v0.1a-alpha - Add Debug Logging
  * 2020-07-12 v0.1-alpha - Initial Release
  * 
  */
@@ -48,13 +49,16 @@ metadata {
         input(name: "mac_address", type: "string", title:"Device Id", description: "Enter Device ID from MeetFlo.com", required: true, displayDuringSetup: true)
         input(name: "revert_mode", type: "enum", title: "Revert Mode (after Sleep)", options: ["home","away","sleep"], defaultValue: "home")
         input(name: "polling_interval", type: "enum", title: "Polling Interval (in Minutes)", options: ["None","5","10", "15", "30", "60"], defaultValue: "10")
-        input(name: "revert_minutes", type: "number", title: "Revert Time in Minutes (after Sleep)", defaultValue: 120)
+        input(name: "revert_minutes", type: "number", title: "Revert Time in Minutes (after Sleep)", defaultValue: 120)    
+        input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
+
     }
     
 }
 
-def parse(String description) {
-    log.debug(description)
+def logsOff(){
+    log.warn "debug logging disabled..."
+    device.updateSetting("logEnable",[value:"false",type:"bool"])
 }
 
 def open() {
@@ -70,6 +74,7 @@ def logout() {
 def updated() {
     configure()
     pollMoen()
+    if (logEnable) runIn(1800,logsOff)
 }
 
 def unschedulePolling() {
@@ -84,6 +89,7 @@ def schedulePolling() {
 }
 
 def pollMoen() {
+    if (logEnable) log.debug("Polling Moen")
     getDeviceInfo()
     getHealthTestInfo()
     getConsumption()
@@ -214,15 +220,15 @@ def make_authenticated_get(uri, request_type, success_status = [200, 202]) {
     
         try {
             httpGet([headers: headers, uri: uri]) { resp -> def msg = ""
-            if (resp?.status in success_status) {
-                response = resp;
-
-            }
-            else {
-                log.debug "${request_type} Failed (${response.status}): ${response.data}"
-                login()
-            }
-          }
+                if (logEnable) log.debug("${request_type} Received Response Code: ${resp?.status}")
+                if (resp?.status in success_status) {
+                    response = resp;
+                }
+                else {
+                    log.debug "${request_type} Failed (${response.status}): ${response.data}"
+                    login()
+                }
+              }
         }
         catch (Exception e) {
             log.debug "${request_type} Exception: ${e}"
@@ -260,14 +266,14 @@ def make_authenticated_post(uri, body, request_type, success_status = [200, 202]
     
         try {
             httpPostJson([headers: headers, uri: uri, body: body]) { resp -> def msg = ""
-            if (resp?.status in success_status) {
-                response = resp;
-
+                if (logEnable) log.debug("${request_type} Received Response Code: ${resp?.status}")
+                if (resp?.status in success_status) {
+                    response = resp;
+                }
+                else {
+                    log.debug "${request_type} Failed (${resp.status}): ${resp.data}"
+                }
             }
-            else {
-                log.debug "${request_type} Failed (${resp.status}): ${resp.data}"
-            }
-          }
         }
         catch (Exception e) {
             log.debug "${request_type} Exception: ${e}"
@@ -300,6 +306,7 @@ def login() {
 
     try {
         httpPostJson([headers: headers, uri: uri, body: body]) { response -> def msg = ""
+        if (logEnable) log.debug("Login received response code ${resp?.status}")
         if (response?.status == 200) {
             msg = "Success"
             device.updateDataValue("token",response.data.token)
