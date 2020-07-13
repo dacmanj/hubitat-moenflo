@@ -17,7 +17,7 @@ Software distributed under the License is distributed on an "AS IS" BASIS, WITHO
 10. For the Type select Moen Flo
 11. Click "Save Device"
 12. Enter your MeetFlo.com username and password
-13. Enter the Device Id of the device you'd like to use (the alphanumeric code found at https://user.meetflo.com/settings/devices)
+13. IF, you have multiple Flo devices, enter the Device Id of the device you'd like to use (the alphanumeric code found at https://user.meetflo.com/settings/devices)
 14. Click "Save Preferences"
 15. If installation succeeds, you will see valve status and other attributes appear in Current States. If you don't, check your logs.
 
