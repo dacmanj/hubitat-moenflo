@@ -308,7 +308,7 @@ def login() {
 
     try {
         httpPostJson([headers: headers, uri: uri, body: body]) { response -> def msg = ""
-        if (logEnable) log.debug("Login received response code ${resp?.status}")
+        if (logEnable) log.debug("Login received response code ${response?.status}")
         if (response?.status == 200) {
             msg = "Success"
             device.updateDataValue("token",response.data.token)
