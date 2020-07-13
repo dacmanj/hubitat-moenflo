@@ -359,7 +359,7 @@ def make_authenticated_post(uri, body, request_type, success_status = [200, 202]
 
 def configure() {
     def token = device.getDataValue("token")
-    if (password && password != "" && token && token != "") {
+    if (password && password != "") {
         device.updateDataValue("encryptedPassword", encrypt(password))
         device.removeSetting("password")
         if (!mac_address || mac_address == "" || !device.getDataValue("device_id") || !device.getDataValue("device_id") == "") {
