@@ -4,7 +4,7 @@
  * ANY KIND, either express or implied. See the License for the specific language governing permissions and 
  * limitations under the License.
  *
- * 2020-07-13 v0.1.06-alpha - Removed pending notification counts, causing unneeded events
+ * 2020-07-13 v0.1.06-alpha - Removed pending notification counts, causing unneeded events, add unit for tempF, round metrics for display
  * 2020-07-13 v0.1.05-alpha - Updated preferences save to separate out password updates
  * 2020-07-13 v0.1.04-alpha - Added last event and last health test to polling
  * 2020-07-13 v0.1.03-alpha - Update to login error logging/handling
@@ -202,8 +202,8 @@ def getDeviceInfo() {
         def uri = "https://api-gw.meetflo.com/api/v2/devices/${device_id}"
         def response = make_authenticated_get(uri, "Get Device")
         def data = response.data
-        sendEvent(name: "gpm", value: data?.telemetry?.current?.gpm)
-        sendEvent(name: "psi", value: data?.telemetry?.current?.psi)
+        sendEvent(name: "gpm", value: round(data?.telemetry?.current?.gpm))
+        sendEvent(name: "psi", value: round(data?.telemetry?.current?.psi))
         sendEvent(name: "temperature", value: data?.telemetry?.current?.tempF, unit: "F")
         sendEvent(name: "updated", value: data?.telemetry?.current?.updated)
         sendEvent(name: "valve", value: data?.valve?.target)
@@ -239,6 +239,9 @@ def getLastAlerts() {
     }
 }
 
+def round(d, places = 2) {
+     return (d as double).round(2)
+}
 
 def getConsumption() {
     def location_id = device.getDataValue("location_id")
@@ -251,7 +254,7 @@ def getConsumption() {
     } else {
         def response = make_authenticated_get(uri, "Get Consumption")
         def data = response.data
-        sendEvent(name: "totalGallonsToday", value: data?.aggregations?.sumTotalGallonsConsumed)
+        sendEvent(name: "totalGallonsToday", value: round(data?.aggregations?.sumTotalGallonsConsumed))
     }
 }
 
