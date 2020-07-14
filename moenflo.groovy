@@ -65,6 +65,7 @@ metadata {
 }
 
 def logsOff(){
+    device.updateSetting("logEnable", false)
     log.warn "Debug Logging Disabled..."
 }
 
