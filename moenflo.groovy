@@ -4,12 +4,12 @@
  * ANY KIND, either express or implied. See the License for the specific language governing permissions and 
  * limitations under the License.
  *
- * 2020-07-13 v0.1e-alpha - Updated preferences save to separate out password updates
- * 2020-07-13 v0.1d-alpha - Added last event and last health test to polling
- * 2020-07-13 v0.1c-alpha - Update to login error logging/handling
- * 2020-07-12 v0.1b-alpha - Default to First Device
- * 2020-07-12 v0.1a-alpha - Add Debug Logging
- * 2020-07-12 v0.1-alpha - Initial Release
+ * 2020-07-13 v0.1.05-alpha - Updated preferences save to separate out password updates
+ * 2020-07-13 v0.1.04-alpha - Added last event and last health test to polling
+ * 2020-07-13 v0.1.03-alpha - Update to login error logging/handling
+ * 2020-07-12 v0.1.02-alpha - Default to First Device
+ * 2020-07-12 v0.1.01-alpha - Add Debug Logging
+ * 2020-07-12 v0.1.0-alpha - Initial Release
  * 
  */
 
