@@ -4,6 +4,7 @@
  * ANY KIND, either express or implied. See the License for the specific language governing permissions and 
  * limitations under the License.
  *
+ * 2020-07-13 v0.1e-alpha - Updated preferences save to separate out password updates
  * 2020-07-13 v0.1d-alpha - Added last event and last health test to polling
  * 2020-07-13 v0.1c-alpha - Update to login error logging/handling
  * 2020-07-12 v0.1b-alpha - Default to First Device
@@ -57,7 +58,7 @@ metadata {
         input(name: "password", type: "password", title:"Password", description: "Enter Moen Flo Password (to set or change it)", displayDuringSetup: true)
         input(name: "mac_address", type: "string", title:"Device Id", description: "Enter Device Id from MeetFlo.com (if you have multiple devices)", required: false, displayDuringSetup: true)
         input(name: "revert_mode", type: "enum", title: "Revert Mode (after Sleep)", options: ["home","away","sleep"], defaultValue: "home")
-        input(name: "polling_interval", type: "enum", title: "Polling Interval (in Minutes)", options: ["None","5","10", "15", "30", "60"], defaultValue: "10")
+        input(name: "polling_interval", type: "number", title: "Polling Interval (in Minutes)", range: 5..59, defaultValue: "10")
         input(name: "revert_minutes", type: "number", title: "Revert Time in Minutes (after Sleep)", defaultValue: 120)    
         input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
 
@@ -191,7 +192,6 @@ def getUserInfo() {
             device.updateDataValue("device_id", it.id)
             device.updateSetting("mac_address", it.macAddress)
             if(logEnable) log.debug "Found device id: ${it.id}"
-            state.configured = true
         }
     }
 }
@@ -366,11 +366,30 @@ def configure() {
             state.configured = false
         }
         login()
-    } else {
+    } else if (!token || token == "") {
         log.debug "Unable to configure -- invalid login"
+        return
     }
-    sendEvent(name:"numberOfButtons", value: 3)
-    schedulePolling()
+    if (isConfigurationValid()) {
+        sendEvent(name:"numberOfButtons", value: 3)
+        schedulePolling()
+        state.configured = true
+    }
+}
+
+def isNotBlank(obj) {
+    return obj && obj != ""
+}
+        
+def isConfigurationValid() {
+    def token = device.getDataValue("token")
+    def device_id = device.getDataValue("device_id")
+    def location_id = device.getDataValue("location_id")
+    def pw = device.getDataValue("encryptedPassword")
+    def user = device.getDataValue("user_id")
+
+    return isNotBlank(token) && isNotBlank(device_id) &&
+        isNotBlank(location_id) && isNotBlank(pw) && isNotBlank(user)
 }
 
 def login() {
