@@ -4,6 +4,7 @@
  * ANY KIND, either express or implied. See the License for the specific language governing permissions and 
  * limitations under the License.
  *
+ * 2020-07-30 v0.1.07-alpha - Changed data type of attributes to string, updated debug message for latest hubitat health test
  * 2020-07-13 v0.1.06-alpha - Removed pending notification counts, causing unneeded events, add unit for tempF, round metrics for display
  * 2020-07-13 v0.1.05-alpha - Updated preferences save to separate out password updates
  * 2020-07-13 v0.1.04-alpha - Added last event and last health test to polling
@@ -37,17 +38,17 @@ metadata {
         attribute "temperature", "number"
         attribute "gpm", "number"
         attribute "psi", "number"
-        attribute "updated", "text"
+        attribute "updated", "string"
         attribute "rssi", "number"
-        attribute "ssid", "text"
-        attribute "lastHubitatHealthtestStatus", "text"
+        attribute "ssid", "string"
+        attribute "lastHubitatHealthtestStatus", "string"
         attribute "totalGallonsToday", "number"
-        attribute "lastEvent", "text"
-        attribute "lastEventDetail", "text"
-        attribute "lastEventDateTime", "text"
-        attribute "lastHealthTestStatus", "text"
-        attribute "lastHealthTestDetail", "text"
-        attribute "lastHealthTestDateTime", "text"
+        attribute "lastEvent", "string"
+        attribute "lastEventDetail", "string"
+        attribute "lastEventDateTime", "string"
+        attribute "lastHealthTestStatus", "string"
+        attribute "lastHealthTestDetail", "string"
+        attribute "lastHealthTestDateTime", "string"
         
     }
 
@@ -264,7 +265,7 @@ def getHealthTestInfo() {
     def deviceId = device.getDataValue("device_id")
     def uri = "https://api-gw.meetflo.com/api/v2/devices/${deviceId}/healthTest/${lastHealthTestId}"
     if(lastHealthTestId && lastHealthTestId != "") {
-        def response = make_authenticated_get(uri, "Get HealthTest Info")
+        def response = make_authenticated_get(uri, "Get Last Hubitat HealthTest Info")
         sendEvent(name: "lastHubitatHealthtestStatus", value: response?.data?.status)
     } else {
         if (logEnabled) log.debug "Skipping Healthtest Update: No Hubitat Health Test Id Found"
