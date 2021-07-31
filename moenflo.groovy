@@ -1,9 +1,10 @@
 /**
- * Moen Flo for Hubitat by David Manuel is licensed under CC BY 4.0 see https://creativecommons.org/licenses/by/4.0
- * Software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF 
- * ANY KIND, either express or implied. See the License for the specific language governing permissions and 
+ * Moen Flo Smart Shutoff for Hubitat by David Manuel is licensed under CC BY 4.0 see https://creativecommons.org/licenses/by/4.0
+ * Software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+ * ANY KIND, either express or implied. See the License for the specific language governing permissions and
  * limitations under the License.
  *
+ * 2021-07-31 v1.0.0 - Hubitat Package Manager support, bump version
  * 2021-01-24 v0.1.08-alpha - Stop checking for last manual healthtest if request fails / id returns nothing
  * 2020-07-30 v0.1.07-alpha - Changed data type of attributes to string, updated debug message for latest hubitat health test
  * 2020-07-13 v0.1.06-alpha - Removed pending notification counts, causing unneeded events, add unit for tempF, round metrics for display
@@ -13,11 +14,11 @@
  * 2020-07-12 v0.1.02-alpha - Default to First Device
  * 2020-07-12 v0.1.01-alpha - Add Debug Logging
  * 2020-07-12 v0.1.0-alpha - Initial Release
- * 
+ *
  */
 
 metadata {
-    definition (name: "Moen Flo", namespace: "dacmanj", author: "David Manuel", importUrl: "https://raw.githubusercontent.com/dacmanj/hubitat-moenflo/master/moenflo.groovy") {
+    definition (name: "Moen Flo Smart Shutoff", namespace: "dacmanj", author: "David Manuel", importUrl: "https://raw.githubusercontent.com/dacmanj/hubitat-moenflo/master/moenflo.groovy") {
         capability "Valve"
         capability "PushableButton"
         capability "LocationMode"
@@ -50,7 +51,7 @@ metadata {
         attribute "lastHealthTestStatus", "string"
         attribute "lastHealthTestDetail", "string"
         attribute "lastHealthTestDateTime", "string"
-        
+
     }
 
     preferences {
@@ -59,11 +60,11 @@ metadata {
         input(name: "mac_address", type: "string", title:"Device Id", description: "Enter Device Id from MeetFlo.com (if you have multiple devices)", required: false, displayDuringSetup: true)
         input(name: "revert_mode", type: "enum", title: "Revert Mode (after Sleep)", options: ["home","away","sleep"], defaultValue: "home")
         input(name: "polling_interval", type: "number", title: "Polling Interval (in Minutes)", range: 5..59, defaultValue: "10")
-        input(name: "revert_minutes", type: "number", title: "Revert Time in Minutes (after Sleep)", defaultValue: 120)    
+        input(name: "revert_minutes", type: "number", title: "Revert Time in Minutes (after Sleep)", defaultValue: 120)
         input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
 
     }
-    
+
 }
 
 def logsOff(){
@@ -81,7 +82,7 @@ def logout() {
     device.updateDataValue("token","")
     device.updateDataValue("device_id","")
     device.updateDataValue("location_id","")
-    device.updateDataValue("user_id","")  
+    device.updateDataValue("user_id","")
     device.updateDataValue("encryptedPassword", "")
     device.removeSetting("username")
     device.removeSetting("mac_address")
@@ -138,14 +139,14 @@ def setMode(mode) {
     def location_id = device.getDataValue("location_id")
     def uri = "https://api-gw.meetflo.com/api/v2/locations/${location_id}/systemMode"
     def body = [target:mode]
-    def headers = [:] 
+    def headers = [:]
     headers.put("Content-Type", "application/json")
     headers.put("Authorization", device.getDataValue("token"))
     if (mode == "sleep") {
         body.put("revertMinutes", revert_minutes)
         body.put("revertMode", revert_mode)
     }
-    
+
     if (!location_id || location_id == "") {
         log.debug "Failed to set mode: No Location Id"
     } else if (!mode || mode == "") {
@@ -154,7 +155,7 @@ def setMode(mode) {
         def response = make_authenticated_post(uri, body, "Mode Update", [204])
         sendEvent(name: "mode", value: mode)
     }
-    
+
 }
 
 def valve_update(target) {
@@ -171,12 +172,12 @@ def valve_update(target) {
 }
 
 def push(btn) {
-    switch(btn) { 
+    switch(btn) {
        case 1: mode = "home"; break;
        case 2: mode = "away"; break;
        case 3: mode = "sleep"; break;
        default: mode = "home";
-    } 
+    }
     if (logEnable) log.debug "Setting Flo mode to ${mode} via button press"
     setMode(mode)
 }
@@ -283,10 +284,10 @@ def make_authenticated_get(uri, request_type, success_status = [200, 202]) {
     int max_tries = 2;
     int tries = 0;
     while (!response?.status && tries < max_tries) {
-        def headers = [:] 
+        def headers = [:]
         headers.put("Content-Type", "application/json")
         headers.put("Authorization", device.getDataValue("token"))
-    
+
         try {
             httpGet([headers: headers, uri: uri]) { resp -> def msg = ""
                 if (logEnable) log.debug("${request_type} Received Response Code: ${resp?.status}")
@@ -332,10 +333,10 @@ def make_authenticated_post(uri, body, request_type, success_status = [200, 202]
     int max_tries = 2;
     int tries = 0;
     while (!response?.status && tries < max_tries) {
-        def headers = [:] 
+        def headers = [:]
         headers.put("Content-Type", "application/json")
         headers.put("Authorization", device.getDataValue("token"))
-    
+
         try {
             httpPostJson([headers: headers, uri: uri, body: body]) { resp -> def msg = ""
                 if (logEnable) log.debug("${request_type} Received Response Code: ${resp?.status}")
@@ -384,7 +385,7 @@ def configure() {
 def isNotBlank(obj) {
     return obj && obj != ""
 }
-        
+
 def isConfigurationValid() {
     def token = device.getDataValue("token")
     def device_id = device.getDataValue("device_id")
@@ -403,7 +404,7 @@ def login() {
         log.debug("Login Failed: No password")
     } else {
         def body = [username:username, password:pw]
-        def headers = [:] 
+        def headers = [:]
         headers.put("Content-Type", "application/json")
 
         try {

@@ -1,0 +1,17 @@
+{
+  "packageName": "Moen Flo",
+  "author": "David Manuel",
+  "minimumHEVersion": "0.0",
+  "licenseFile": "https://creativecommons.org/licenses/by/4.0/",
+  "dateReleased": "2021-07-31",
+  "drivers": [
+    {
+      "id": "6f601b4b-151e-4a46-b53f-e9084f68d7db",
+      "name": "Moen Flo Smart Water Shutoff",
+      "namespace": "dacmanj",
+      "location": "https://raw.githubusercontent.com/dacmanj/hubitat-moenflo/master/moenflo.groovy",
+      "required": true,
+      "version": "1.0.0"
+    }
+  ]
+}
