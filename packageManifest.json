@@ -6,8 +6,8 @@
   "dateReleased": "2021-07-31",
   "drivers": [
     {
-      "id": "6f601b4b-151e-4a46-b53f-e9084f68d7db",
-      "name": "Moen Flo Smart Water Shutoff",
+      "id": "84a77563-01c5-492f-8992-912a9b1ed527",
+      "name": "Moen Flo Smart Shutoff",
       "namespace": "dacmanj",
       "location": "https://raw.githubusercontent.com/dacmanj/hubitat-moenflo/master/moenflo.groovy",
       "required": true,
