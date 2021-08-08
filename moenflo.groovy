@@ -18,7 +18,7 @@
  */
 
 metadata {
-    definition (name: "Moen Flo Smart Shutoff", namespace: "dacmanj", author: "David Manuel", importUrl: "https://raw.githubusercontent.com/dacmanj/hubitat-moenflo/master/moenflo.groovy") {
+    definition (name: "Moen Flo Smart Shutoff", namespace: "dacmanj", author: "David Manuel", importUrl: "https://raw.githubusercontent.com/dacmanj/hubitat/main/drivers/MoenFloSmartShutoff/moenflo.groovy") {
         capability "Valve"
         capability "PushableButton"
         capability "LocationMode"
