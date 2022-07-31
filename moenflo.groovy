@@ -181,19 +181,26 @@ def push(btn) {
     if (logEnable) log.debug "Setting Flo mode to ${mode} via button press"
     setMode(mode)
 }
-
 def getUserInfo() {
     def user_id = device.getDataValue("user_id")
-    if (mac_address) { log.debug "Getting device id for: ${mac_address}"}
-    else { log.debug "Defaulting to first device found." }
+    if (mac_address) {
+        log.debug "Getting device id for: ${mac_address}"
+    } else {
+        log.debug "Defaulting to first device found."
+    }
     def uri = "https://api-gw.meetflo.com/api/v2/users/${user_id}?expand=locations,alarmSettings"
     def response = make_authenticated_get(uri, "Get User Info")
-    device.updateDataValue("location_id", response.data.locations[0].id)
-    response.data.locations[0].devices.each {
-        if(it.macAddress == mac_address || !mac_address || mac_address == "") {
-            device.updateDataValue("device_id", it.id)
-            device.updateSetting("mac_address", it.macAddress)
-            if(logEnable) log.debug "Found device id: ${it.id}"
+
+    response.data.locations.eachWithIndex {
+        location,
+        lIndex ->
+        response.data.locations[lIndex].devices.each {
+            if (it.macAddress == mac_address || !mac_address || mac_address == "") {
+                device.updateDataValue("location_id", location.id)
+                device.updateDataValue("device_id", it.id)
+                device.updateSetting("mac_address", it.macAddress)
+                if (logEnable) log.debug "Found device id: ${it.id}"
+            }
         }
     }
 }
